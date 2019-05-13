@@ -7,11 +7,13 @@ import android.support.annotation.NonNull;
 import android.net.wifi.SupplicantState;
 import android.util.Log;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableArray;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -90,22 +92,26 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getBroadcast(final Promise promise) throws Exception {
+    public void getBroadcastAdresses(final Promise promise) throws Exception {
         new Thread(new Runnable() {
             public void run() {
-                try {
-                    String ipAddress = null;
+                WritableArray broadcastList = Arguments.createArray();
+                broadcastList.pushString("255.255.255.255");
 
-                    for (InterfaceAddress address : getInetAddresses()) {
-                        if (!address.getAddress().isLoopbackAddress()) {
+                try {
+                    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                    while (interfaces.hasMoreElements()) {
+                        NetworkInterface networkInterface = interfaces.nextElement();
+                        if (networkInterface.isLoopback() || !networkInterface.isUp()) continue;
+
+                        for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
                             InetAddress broadCast = address.getBroadcast();
-                            if (broadCast != null) ipAddress = broadCast.getHostAddress().toString();
+                            if (broadCast != null) broadcastList.pushString(broadCast.getHostAddress().toString());
                         }
                     }
-                    promise.resolve(ipAddress);
-                } catch (Exception e) {
-                    promise.resolve(null);
-                }
+                } catch (Exception e) { }
+
+                promise.resolve(broadcastList);
             }
         }).start();
     }

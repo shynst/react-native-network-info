@@ -12,8 +12,8 @@ const NetworkInfo = {
     return await RNNetworkInfo.getBSSID();
   },
 
-  async getBroadcast() {
-    return await RNNetworkInfo.getBroadcast();
+  async getBroadcastAdresses() {
+    return await RNNetworkInfo.getBroadcastAdresses();
   },
 
   async getIPAddress() {

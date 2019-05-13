@@ -29,13 +29,13 @@ RCT_EXPORT_METHOD(getSSID:(RCTPromiseResolveBlock)resolve
 {
     @try{
         NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
-        
+
         NSDictionary *SSIDInfo;
         NSString *SSID = NULL;
-        
+
         for (NSString *interfaceName in interfaceNames) {
             SSIDInfo = CFBridgingRelease(CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
-            
+
             if (SSIDInfo.count > 0) {
                 SSID = SSIDInfo[@"SSID"];
                 break;
@@ -53,7 +53,7 @@ RCT_EXPORT_METHOD(getBSSID:(RCTPromiseResolveBlock)resolve
     @try{
         NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
         NSString *BSSID = NULL;
-        
+
         for (NSString* interface in interfaceNames)
         {
             CFDictionaryRef networkDetails = CNCopyCurrentNetworkInfo((CFStringRef) interface);
@@ -69,20 +69,22 @@ RCT_EXPORT_METHOD(getBSSID:(RCTPromiseResolveBlock)resolve
     }
 }
 
-RCT_EXPORT_METHOD(getBroadcast:(RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(getBroadcastAdresses:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 {
+    NSMutableArray *broadcastList = [NSMutableArray arrayWithObjects:@"255.255.255.255",nil];
+
     @try{
         NSString *address = NULL;
         NSString *netmask = @"error";
-        
+
         struct ifaddrs *interfaces = NULL;
         struct ifaddrs *temp_addr = NULL;
         int success = 0;
-        
+
         success = getifaddrs(&interfaces);
-        
+
         if (success == 0) {
             temp_addr = interfaces;
             while(temp_addr != NULL) {
@@ -90,25 +92,23 @@ RCT_EXPORT_METHOD(getBroadcast:(RCTPromiseResolveBlock)resolve
                     if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
                         address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
                         netmask = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_netmask)->sin_addr)];
-                        
+
                         struct in_addr local_addr;
                         struct in_addr netmask_addr;
                         inet_aton([address UTF8String], &local_addr);
                         inet_aton([netmask UTF8String], &netmask_addr);
-                        
+
                         local_addr.s_addr |= ~(netmask_addr.s_addr);
-                        
-                        address = [NSString stringWithUTF8String:inet_ntoa(local_addr)];
+                        [broadcastList addObject:[NSString stringWithUTF8String:inet_ntoa(local_addr)]];
                     }
                 }
                 temp_addr = temp_addr->ifa_next;
             }
         }
         freeifaddrs(interfaces);
-        resolve(address);
-    }@catch (NSException *exception) {
-        resolve(NULL);
-    }
+    }@catch (NSException *exception) { }
+
+    resolve(broadcastList);
 }
 
 RCT_EXPORT_METHOD(getIPAddress:(RCTPromiseResolveBlock)resolve
@@ -116,13 +116,13 @@ RCT_EXPORT_METHOD(getIPAddress:(RCTPromiseResolveBlock)resolve
 {
     @try {
         NSString *address = NULL;
-        
+
         struct ifaddrs *interfaces = NULL;
         struct ifaddrs *temp_addr = NULL;
         int success = 0;
-        
+
         success = getifaddrs(&interfaces);
-        
+
         if (success == 0) {
             temp_addr = interfaces;
             while(temp_addr != NULL) {
@@ -148,7 +148,7 @@ RCT_EXPORT_METHOD(getIPV4Address:(RCTPromiseResolveBlock)resolve
         NSArray *searchArray = @[ IOS_WIFI @"/" IP_ADDR_IPv4, IOS_CELLULAR @"/" IP_ADDR_IPv4 ];
         NSDictionary *addresses = [self getAllIPAddresses];
         NSLog(@"addresses: %@", addresses);
-        
+
         __block NSString *address;
         [searchArray enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop)
          {
@@ -165,7 +165,7 @@ RCT_EXPORT_METHOD(getIPV4Address:(RCTPromiseResolveBlock)resolve
 - (NSDictionary *)getAllIPAddresses
 {
     NSMutableDictionary *addresses = [NSMutableDictionary dictionaryWithCapacity:8];
-    
+
     // retrieve the current interfaces - returns 0 on success
     struct ifaddrs *interfaces;
     if(!getifaddrs(&interfaces)) {
@@ -203,4 +203,3 @@ RCT_EXPORT_METHOD(getIPV4Address:(RCTPromiseResolveBlock)resolve
 }
 
 @end
-
