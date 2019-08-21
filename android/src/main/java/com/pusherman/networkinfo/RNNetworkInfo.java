@@ -96,7 +96,6 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
         new Thread(new Runnable() {
             public void run() {
                 WritableArray broadcastList = Arguments.createArray();
-                broadcastList.pushString("255.255.255.255");
 
                 try {
                     Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -109,6 +108,7 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
                             if (broadCast != null) broadcastList.pushString(broadCast.getHostAddress().toString());
                         }
                     }
+                    if (broadcastList.size() > 0) broadcastList.pushString("255.255.255.255");
                 } catch (Exception e) { }
 
                 promise.resolve(broadcastList);
