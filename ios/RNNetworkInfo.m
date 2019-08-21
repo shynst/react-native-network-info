@@ -73,7 +73,7 @@ RCT_EXPORT_METHOD(getBroadcastAdresses:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 {
-    NSMutableArray *broadcastList = [NSMutableArray arrayWithObjects:@"255.255.255.255",nil];
+    NSMutableArray *broadcastList = [NSMutableArray new];
 
     @try{
         NSString *address = NULL;
@@ -99,7 +99,9 @@ RCT_EXPORT_METHOD(getBroadcastAdresses:(RCTPromiseResolveBlock)resolve
                         inet_aton([netmask UTF8String], &netmask_addr);
 
                         local_addr.s_addr |= ~(netmask_addr.s_addr);
+                        [broadcastList addObject:@"255.255.255.255"];
                         [broadcastList addObject:[NSString stringWithUTF8String:inet_ntoa(local_addr)]];
+                        break;
                     }
                 }
                 temp_addr = temp_addr->ifa_next;
