@@ -3,7 +3,6 @@ package com.pusherman.networkinfo;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.support.annotation.NonNull;
 import android.net.wifi.SupplicantState;
 import android.util.Log;
 
